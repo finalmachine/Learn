@@ -8,10 +8,10 @@ import java.net.SocketTimeoutException;
 import java.security.KeyManagementException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -37,6 +37,7 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -99,32 +100,32 @@ public class BasicHttpClient implements Closeable {
 	 */
 	public BasicHttpClient() {
 		// 将HTTPS的网站证书设置成不检查的状态
-		SSLContext sslcontext = null;
+		SSLContext sslcontext;
 		try {
 			sslcontext = SSLContexts.createDefault();
-			sslcontext.init(null, new TrustManager[] { trustAllManager }, null);
+			sslcontext.init(null, new TrustManager[]{trustAllManager}, null);
 		} catch (KeyManagementException e) {
 			throw new RuntimeException(e);
 		}
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext, null,
 				null, NoopHostnameVerifier.INSTANCE);
-		client = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+		client = HttpClients.custom().setSSLSocketFactory(sslsf).setRetryHandler(new DefaultHttpRequestRetryHandler(0, false)).build();
 		// 初始化context
 		context = new HttpClientContext();
 	}
 
 	/**
 	 * @param requestBase the HTTP request to be send
-	 * Accept			text/html, application/xhtml+xml, 
-	 * 					application/xml;q=0.9, application/json;q=0.9,
-	 * 					image/webp,
-	 * 					other;q=0.8
-	 * Accept-Charset	utf-8, gbk;q=0.9, iso-8859-1;q=0.8
-	 * Accept-Encoding*	gzip, deflate
-	 * Accept-Language	zh-CN,zh;q=0.8
-	 * Connection*		keep-alive
-	 * Host*			as you need
-	 * User-Agent		Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36
+	 *                    Accept			text/html, application/xhtml+xml,
+	 *                    application/xml;q=0.9, application/json;q=0.9,
+	 *                    image/webp,
+	 *                    other;q=0.8
+	 *                    Accept-Charset	utf-8, gbk;q=0.9, iso-8859-1;q=0.8
+	 *                    Accept-Encoding*	gzip, deflate
+	 *                    Accept-Language	zh-CN,zh;q=0.8
+	 *                    Connection*		keep-alive
+	 *                    Host*			as you need
+	 *                    User-Agent		Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36
 	 */
 	protected void setHeaders(HttpRequestBase requestBase, Map<String, String> extraHeaders) {
 		requestBase.setHeader("Accept", Accept);
@@ -140,31 +141,27 @@ public class BasicHttpClient implements Closeable {
 
 	protected void prepare(HttpMethod method, String uri, Map<String, String> extraHeaders, Map<String, String> data) {
 		switch (method) {
-		case GET:
-			HttpGet requestGet = new HttpGet(uri);
-			request = requestGet;
-			break;
-		case POST:
-			HttpPost requestPost = new HttpPost(uri);
-			List<NameValuePair> list = new ArrayList<>();
-			for (String key : data.keySet()) {
-				list.add(new BasicNameValuePair(key, data.get(key)));
-			}
-			try {
-				requestPost.setEntity(new UrlEncodedFormEntity(list, "UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-				throw new RuntimeException(e);
-			}
-			request = requestPost;
-			break;
-		default:
-			break;
+			case GET:
+				request = new HttpGet(uri);
+				break;
+			case POST:
+				HttpPost requestPost = new HttpPost(uri);
+				List<NameValuePair> list = data.keySet().stream().map(key -> new BasicNameValuePair(key, data.get(key))).collect(Collectors.toList());
+				try {
+					requestPost.setEntity(new UrlEncodedFormEntity(list, "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					throw new RuntimeException(e);
+				}
+				request = requestPost;
+				break;
+			default:
+				break;
 		}
 		lastStatus = 0;
 		setHeaders(request, extraHeaders);
 		// 设置http请求的配置参数
 		config = RequestConfig.custom()//
-				.setMaxRedirects(0)//
+				.setMaxRedirects(defaultMaxRedirects)//
 				.setSocketTimeout(networkTimeout == -1 ? defaultSocketTimeout : networkTimeout)//
 				.setConnectTimeout(networkTimeout == -1 ? defaultConnectTimeout : networkTimeout)//
 				.setConnectionRequestTimeout(networkTimeout == -1 ? setConnectionRequestTimeout : networkTimeout)//
@@ -210,7 +207,6 @@ public class BasicHttpClient implements Closeable {
 			} else if (e.getCause() instanceof ProtocolException) {
 				lastStatus = ProtocolError;
 			} else {
-				System.err.println("throw");
 				throw new RuntimeException(e);
 			}
 		} catch (SocketException e) {
@@ -228,7 +224,8 @@ public class BasicHttpClient implements Closeable {
 				try {
 					response.close();
 				} catch (IOException e) {
-					throw new RuntimeException(e);
+					System.err.println("response 关闭失败");
+					e.printStackTrace();
 				}
 			}
 		}
@@ -279,7 +276,6 @@ public class BasicHttpClient implements Closeable {
 			} else if (e.getCause() instanceof ProtocolException) {
 				lastStatus = ProtocolError;
 			} else {
-				System.err.println("throw");
 				throw new RuntimeException(e);
 			}
 		} catch (SocketException e) {
@@ -297,7 +293,8 @@ public class BasicHttpClient implements Closeable {
 				try {
 					response.close();
 				} catch (IOException e) {
-					throw new RuntimeException(e);
+					System.err.println("response 关闭失败");
+					e.printStackTrace();
 				}
 			}
 		}
@@ -310,9 +307,9 @@ public class BasicHttpClient implements Closeable {
 
 	/**
 	 * 得到最后得到的HTTP状态码
-	 * 
+	 *
 	 * @return = -3} 超过最大重定向次数 = -2} Socket连接超时 = -1} Connect连接超时 = 0} 未设置 >= 1}
-	 *         HTTP协议规定的返回码
+	 * HTTP协议规定的返回码
 	 */
 	public int getLastStatus() {
 		return lastStatus;
@@ -321,9 +318,9 @@ public class BasicHttpClient implements Closeable {
 	/**
 	 * Set proxy of the HttpClient by hostname and port.
 	 *
-	 * @param hostname  the hostname (IP or DNS name)
-	 * @param port      the port number.
-	 *                  {@code -1} indicates the scheme default port.
+	 * @param hostname the hostname (IP or DNS name)
+	 * @param port     the port number.
+	 *                 {@code -1} indicates the scheme default port.
 	 */
 	public void setProxy(String hostname, int port) {
 		proxy = new HttpHost(hostname, port);
@@ -332,9 +329,9 @@ public class BasicHttpClient implements Closeable {
 	/**
 	 * Set proxy of the HttpClient by hostname and port.
 	 *
-	 * @param hostname  the hostname (IP or DNS name)
-	 * @param port      the port number.
-	 *                  {@code -1} indicates the scheme default port.
+	 * @param hostname the hostname (IP or DNS name)
+	 * @param port     the port number.
+	 *                 {@code -1} indicates the scheme default port.
 	 */
 	public void setProxy(String hostname, String port) {
 		proxy = new HttpHost(hostname, Integer.parseInt(port));
@@ -345,7 +342,6 @@ public class BasicHttpClient implements Closeable {
 	}
 
 	/**
-	 * 
 	 * @param millisecond equal or great than 0
 	 */
 	public void setNetworkTimeout(int millisecond) {

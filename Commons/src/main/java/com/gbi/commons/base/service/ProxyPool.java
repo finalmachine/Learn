@@ -127,7 +127,7 @@ public class ProxyPool {
 			producer.send((String) proxyInfo.get("_id"));
 		}
 		cursor.close();
-		new MsgConsumers(queueName, 20, () -> ProxyPool::checkProxy).run();
+		new MsgConsumers<>(queueName, 20, () -> ProxyPool::checkProxy).run();
 	}
 
 	private static boolean checkProxy(String socketAddr) {

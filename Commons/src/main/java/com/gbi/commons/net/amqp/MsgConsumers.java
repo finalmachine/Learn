@@ -15,27 +15,27 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownSignalException;
 
-public class MsgConsumers {
+public class MsgConsumers<T extends Serializable> {
 	
 	final class ConConsumer extends MsgBase implements Consumer {
 
-		private MsgWorker<? extends Serializable> _worker = null;
-		
-		public <T extends Serializable> ConConsumer(String queueName, ExecutorService pool, MsgWorker<T> worker) throws IOException,
+		private MsgWorker<T> _worker = null;
+
+		public ConConsumer(String queueName, ExecutorService pool, MsgWorker<T> worker) throws IOException,
 				TimeoutException {
 			super(queueName, pool);
 			_channel.basicQos(1);
 			_worker = worker;
 		}
 
-		public <T extends Serializable> ConConsumer(String queueName, ExecutorService pool, MsgWorker<T> worker, String host,
+        public ConConsumer(String queueName, ExecutorService pool, MsgWorker<T> worker, String host,
 				int port, String username, String password, String virtualHost) throws IOException,
 				TimeoutException {
 			super(queueName, pool, host, port, username, password, virtualHost);
 			_channel.basicQos(1);
 			_worker = worker;
 		}
-		
+
 		public void register() {
 			try {
 				_channel.basicConsume(_queueName, false, this);
@@ -74,9 +74,10 @@ public class MsgConsumers {
 			if (result) {
 				_channel.basicAck(envelope.getDeliveryTag(), false);
 				System.out.println("return");
-				return;
-			}
-			_channel.basicRecover(true);
+			} else {
+                System.out.println("false");
+                _channel.basicRecover(true);
+            }
 		}
 
 		@Override
@@ -93,8 +94,8 @@ public class MsgConsumers {
 	private ExecutorService _threadPool;
 	private List<ConConsumer> _consumers = new ArrayList<>();
 	private MsgQueueMonitor _monitor;
-
-	public <T extends Serializable> MsgConsumers(String queueName, int size, MsgWorkerFactory<T> factory) {
+    //<T extends Serializable>
+	public  MsgConsumers(String queueName, int size, MsgWorkerFactory<T> factory) {
 		if (size <= 0) {
 			throw new IllegalArgumentException("size must over 0");
 		}

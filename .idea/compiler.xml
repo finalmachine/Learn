@@ -24,10 +24,18 @@
         <processorPath useClasspath="true" />
         <module name="Commons" />
       </profile>
+      <profile default="false" name="Annotation profile for MongoDB-2" enabled="true">
+        <sourceOutputDir name="target\generated-sources\annotations" />
+        <sourceTestOutputDir name="target\generated-test-sources\test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="MongoDB-2" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Commons" target="1.8" />
       <module name="Learn" target="1.5" />
+      <module name="MongoDB-2" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Commons/Commons.iml" filepath="$PROJECT_DIR$/Commons/Commons.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Jsoup/Jsoup.iml" filepath="$PROJECT_DIR$/Jsoup/Jsoup.iml" />
       <module fileurl="file://$PROJECT_DIR$/Learn.iml" filepath="$PROJECT_DIR$/Learn.iml" />
       <module fileurl="file://$PROJECT_DIR$/MongoDB-2/MongoDB-2.iml" filepath="$PROJECT_DIR$/MongoDB-2/MongoDB-2.iml" />
     </modules>

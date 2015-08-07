@@ -31,9 +31,17 @@
         <processorPath useClasspath="true" />
         <module name="MongoDB-2" />
       </profile>
+      <profile default="false" name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="Jsoup" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Commons" target="1.8" />
+      <module name="Jsoup" target="1.5" />
       <module name="Learn" target="1.5" />
       <module name="MongoDB-2" target="1.8" />
     </bytecodeTargetLevel>

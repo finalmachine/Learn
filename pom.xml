@@ -11,6 +11,7 @@
     <modules>
         <module>Commons</module>
         <module>MongoDB-2</module>
+        <module>Jsoup</module>
     </modules>
 
 

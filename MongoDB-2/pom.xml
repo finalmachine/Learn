@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>Learn</artifactId>
@@ -11,6 +9,10 @@
 
     <artifactId>MongoDB-2</artifactId>
     <version>1.0</version>
+    <packaging>jar</packaging>
+
+    <name>MongoDB-2</name>
+    <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -49,8 +51,7 @@
         <dependency>
             <groupId>com.gbi</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.2</version>
+            <version>0.1.2</version>
         </dependency>
     </dependencies>
-
 </project>

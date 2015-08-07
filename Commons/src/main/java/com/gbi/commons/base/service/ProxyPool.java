@@ -1,7 +1,6 @@
 package com.gbi.commons.base.service;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -18,8 +17,6 @@ import org.jsoup.select.Elements;
 import com.gbi.commons.config.Params;
 import com.gbi.commons.net.amqp.MsgConsumers;
 import com.gbi.commons.net.amqp.MsgProducer;
-import com.gbi.commons.net.amqp.MsgWorker;
-import com.gbi.commons.net.amqp.MsgWorkerFactory;
 import com.gbi.commons.net.http.BasicHttpClient;
 import com.gbi.commons.net.http.BasicHttpResponse;
 import com.mongodb.BasicDBList;
@@ -43,12 +40,10 @@ public class ProxyPool {
 			client = new MongoClient(Params.MongoDB.PROXIES.host, Params.MongoDB.PROXIES.port);
 			collection = client.getDB(Params.MongoDB.PROXIES.database).getCollection("proxies");
 			producer = new MsgProducer<>(queueName);
-		} catch (UnknownHostException | TimeoutException e) {
-			throw new RuntimeException(e);
-		} catch (IOException e) {
+		} catch (TimeoutException | IOException e) {
 			throw new RuntimeException(e);
 		}
-		checkSubject.put("US", "http://www.google.com");
+        checkSubject.put("US", "http://www.google.com");
 		checkSubject.put("CN", "http://www.shanghai.gov.cn/newshanghai/img/color-logo-hd.png"); // 百度logo
 
 		BasicHttpClient c = new BasicHttpClient();
@@ -84,8 +79,8 @@ public class ProxyPool {
 				while (true) {
 					Document dom = response.getDocument();
 					List<TextNode> textNodes = response.getDocument().select("div.cont_font>p").first().textNodes();
-					Pattern pattern = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+):(\\d+)@([^@#]*)#(【匿】){0,1}([^#]*)");
-					for (TextNode textNode : textNodes) {
+					Pattern pattern = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+):(\\d+)@(\\S*?)#(【匿】){0,1}(\\S*?)");
+                    for (TextNode textNode : textNodes) {
 						Matcher m = pattern.matcher(textNode.text());
 						if (m.find()) {
 							DBObject proxy = collection.findOne(new BasicDBObject("_id", m.group(1) + ":" + m.group(2)));
@@ -132,12 +127,7 @@ public class ProxyPool {
 			producer.send((String) proxyInfo.get("_id"));
 		}
 		cursor.close();
-		new MsgConsumers(queueName, 20, new MsgWorkerFactory<String>() {
-			@Override
-			public MsgWorker<String> newWorker() {
-				return socketAddr -> checkProxy(socketAddr);
-			}
-		}).run();
+		new MsgConsumers(queueName, 20, () -> ProxyPool::checkProxy).run();
 	}
 
 	private static boolean checkProxy(String socketAddr) {

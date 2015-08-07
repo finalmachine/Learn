@@ -137,15 +137,19 @@ public class ProxyPool {
 		BasicDBList tag = new BasicDBList();
 		BasicDBList delay = new BasicDBList();
 		for (String key : checkSubject.keySet()) {
+			System.out.println(socketAddr + ">" + key);
 			long beginTime = System.currentTimeMillis();
 			BasicHttpResponse r = browser.get(checkSubject.get(key));
+			System.out.println(socketAddr + " " + r==null + " " + key);
 			if (r == null) {
 				continue;
 			}
+			System.out.println(socketAddr + "<" + key);
 			long endTime = System.currentTimeMillis();
 			tag.add(key);
 			delay.add(endTime - beginTime);
 		}
+
 		System.out.println(socketAddr + " out");
 		if (tag.size() == 0) {
 			System.out.println(socketAddr + " 没什么用");

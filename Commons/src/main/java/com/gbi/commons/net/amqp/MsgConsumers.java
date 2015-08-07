@@ -67,15 +67,16 @@ public class MsgConsumers<T extends Serializable> {
 				result = _worker.work(SerializationUtils.deserialize(body));
 				System.out.println(result);
 			} catch (Exception e) {
+				System.err.println("------------------");
 				e.printStackTrace();
 				_channel.basicRecover(true);
 				return;
 			}
 			if (result) {
 				_channel.basicAck(envelope.getDeliveryTag(), false);
-				System.out.println("return");
+				System.out.println("return " + SerializationUtils.deserialize(body));
 			} else {
-                System.out.println("false");
+                System.out.println("false " + SerializationUtils.deserialize(body));
                 _channel.basicRecover(true);
             }
 		}
@@ -111,7 +112,7 @@ public class MsgConsumers<T extends Serializable> {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	public void run() {
 		// commit the channels >
 		for (ConConsumer consumer : _consumers) {

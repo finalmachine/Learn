@@ -1,16 +1,15 @@
 package com.gbi.commons.net.http;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.annotation.Immutable;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.http.util.Args;
+import org.apache.http.util.ByteArrayBuffer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,7 +37,7 @@ public class BasicHttpResponse {
 		url = hostUri + requestLine;
 		HttpResponse response = (HttpResponse) context.getAttribute(HttpClientContext.HTTP_RESPONSE);
 		headers = response.getAllHeaders();
-		content = EntityUtils.toByteArray(response.getEntity());
+		content = toByteArray(response.getEntity());
 		String temp = response.getEntity().getContentType().getValue();
 		if (temp.indexOf(';') != -1) {
 			contentType = temp.substring(0, temp.indexOf(';')).trim();
@@ -144,6 +143,31 @@ public class BasicHttpResponse {
 			return new String(content, contentCharset == null ? "US-ASCII" : contentCharset);
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	public static byte[] toByteArray(final HttpEntity entity) throws IOException {
+		Args.notNull(entity, "Entity");
+		final InputStream instream = entity.getContent();
+		if (instream == null) {
+			return null;
+		}
+		try {
+			Args.check(entity.getContentLength() <= Integer.MAX_VALUE,
+					"HTTP entity too large to be buffered in memory");
+			int i = (int)entity.getContentLength();
+			if (i < 0) {
+				throw new NoHttpResponseException("content length < 0");
+			}
+			final ByteArrayBuffer buffer = new ByteArrayBuffer(i);
+			final byte[] tmp = new byte[4096];
+			int l;
+			while((l = instream.read(tmp)) != -1) {
+				buffer.append(tmp, 0, l);
+			}
+			return buffer.toByteArray();
+		} finally {
+			instream.close();
 		}
 	}
 }

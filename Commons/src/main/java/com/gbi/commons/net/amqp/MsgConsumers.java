@@ -62,21 +62,18 @@ public class MsgConsumers<T extends Serializable> {
 		@Override
 		public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
 				byte[] body) throws IOException {
+			System.out.println("message:" + SerializationUtils.deserialize(body));
 			boolean result;
 			try {
 				result = _worker.work(SerializationUtils.deserialize(body));
-				System.out.println(result);
 			} catch (Exception e) {
-				System.err.println("------------------");
 				e.printStackTrace();
 				_channel.basicRecover(true);
 				return;
 			}
 			if (result) {
 				_channel.basicAck(envelope.getDeliveryTag(), false);
-				System.out.println("return " + SerializationUtils.deserialize(body));
 			} else {
-                System.out.println("false " + SerializationUtils.deserialize(body));
                 _channel.basicRecover(true);
             }
 		}

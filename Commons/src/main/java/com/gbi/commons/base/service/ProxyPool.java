@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +30,7 @@ import com.mongodb.MongoClient;
 public class ProxyPool {
 
 	private static final String queueName = "ProxyPool";
-	private static final Map<String, String> checkSubject = new HashMap<>();
+	private static final Map<String, String> checkSubject = new ConcurrentHashMap<>();
 	// private static final Map<String, String> subjectMd5 = new HashMap<>();
 	private static MongoClient client = null;
 	private static DBCollection collection = null;
@@ -46,9 +47,9 @@ public class ProxyPool {
         checkSubject.put("US", "http://www.google.com");
 		checkSubject.put("CN", "http://www.shanghai.gov.cn/newshanghai/img/color-logo-hd.png"); // 百度logo
 
-		BasicHttpClient c = new BasicHttpClient();
-		c.setProxy(Params.StableProxy.ZHITAO.host, Params.StableProxy.ZHITAO.port);
-		c.close();
+	//	BasicHttpClient c = new BasicHttpClient();
+	//	c.setProxy(Params.StableProxy.ZHITAO.host, Params.StableProxy.ZHITAO.port);
+	//	c.close();
 	}
 
 	private static void exit() {
@@ -66,6 +67,7 @@ public class ProxyPool {
 			BasicHttpResponse response = browser.get(url);
 			if (response == null) {
 				browser.close();
+				System.out.println(browser.getLastStatus());
 				throw new RuntimeException("有代理国外代理访问失败");
 			}
 			// 抓取首页 >
@@ -122,12 +124,12 @@ public class ProxyPool {
 	}
 
 	public static void checkProxyPool() {
-		DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
-		for (DBObject proxyInfo : cursor) {
-			producer.send((String) proxyInfo.get("_id"));
-		}
-		cursor.close();
-		new MsgConsumers<>(queueName, 20, () -> ProxyPool::checkProxy).run();
+	//	DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
+	//	for (DBObject proxyInfo : cursor) {
+	//		producer.send((String) proxyInfo.get("_id"));
+	//	}
+	//	cursor.close();
+		new MsgConsumers<>(queueName, 1, () -> ProxyPool::checkProxy).run();
 	}
 
 	private static boolean checkProxy(String socketAddr) {
@@ -140,7 +142,7 @@ public class ProxyPool {
 			System.out.println(socketAddr + ">" + key);
 			long beginTime = System.currentTimeMillis();
 			BasicHttpResponse r = browser.get(checkSubject.get(key));
-			System.out.println(socketAddr + " " + r==null + " " + key);
+			System.out.println(socketAddr + " " + (r == null) + " " + key);
 			if (r == null) {
 				continue;
 			}
@@ -149,7 +151,6 @@ public class ProxyPool {
 			tag.add(key);
 			delay.add(endTime - beginTime);
 		}
-
 		System.out.println(socketAddr + " out");
 		if (tag.size() == 0) {
 			System.out.println(socketAddr + " 没什么用");
@@ -158,7 +159,8 @@ public class ProxyPool {
 			DBObject proxyInfo = collection.findOne(new BasicDBObject("_id", socketAddr));
 			proxyInfo.put("tag", tag);
 			proxyInfo.put("delay", delay);
-			proxyInfo.put("updateTime", Calendar.getInstance().getTime());
+		//	proxyInfo.put("updateTime", Calendar.getInstance().getTime());
+			proxyInfo.put("updateTime", "3"); // TODO
 			collection.save(proxyInfo);
 		}
 		browser.close();
@@ -168,7 +170,7 @@ public class ProxyPool {
 
 	public static void main(String[] args) {
 		init();
-		GrabYoudaili();
+	//	GrabYoudaili();
 		checkProxyPool();
 		exit();
 	}

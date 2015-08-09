@@ -13,10 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpHost;
@@ -46,16 +43,16 @@ import org.apache.http.message.BasicNameValuePair;
 public class BasicHttpClient implements Closeable {
 
 	// default config
-	protected static final int defaultConnectTimeout = 240000;
-	protected static final int defaultSocketTimeout = 240000;
-	protected static final int setConnectionRequestTimeout = 200000;
-	protected static final int defaultMaxRedirects = 5;
+	protected static final int defaultConnectTimeout = 60000; // 请求超时的时间
+	protected static final int defaultSocketTimeout = 60000; // 响应超时的时间
+	protected static final int setConnectionRequestTimeout = 60000;
+	protected static final int defaultMaxRedirects = 3;
 
 	// default headers
 	protected static final String Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.9,image/webp,*/*;q=0.8";
 	protected static final String Accept_Charset = "utf-8, gbk;q=0.9";
 	protected static final String Accept_Language = "zh-CN,zh;q=0.8";
-	protected static final String User_Agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36";
+	protected static final String User_Agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36";
 
 
 	// default error code
@@ -68,7 +65,10 @@ public class BasicHttpClient implements Closeable {
 	protected static final int SSLHandshakeError = -7;
 	protected static final int ProtocolError = -8;
 	protected static final int ConnectionClosedError = -9; // 有可能是Content-Length 与 实际接收到的 不一致
+	protected static final int SSLError = -10; // 多数情况是读取content过程中发生的错误
 
+
+	private String proxystr;
 	/**
 	 * 重写验证方法，取消检测ssl
 	 */
@@ -130,7 +130,7 @@ public class BasicHttpClient implements Closeable {
 	protected void setHeaders(HttpRequestBase requestBase, Map<String, String> extraHeaders) {
 		requestBase.setHeader("Accept", Accept);
 		requestBase.setHeader("Accept-Language", Accept_Language);
-		requestBase.setHeader("Accept-Charset", Accept_Charset);
+	//	requestBase.setHeader("Accept-Charset", Accept_Charset);
 		requestBase.setHeader("User-Agent", User_Agent);
 		if (extraHeaders != null) {
 			for (String headName : extraHeaders.keySet()) {
@@ -185,7 +185,11 @@ public class BasicHttpClient implements Closeable {
 	public BasicHttpResponse get(final String uri, Map<String, String> extraHeaders, boolean onlySucessfulEntity) {
 		prepare(HttpMethod.GET, uri, extraHeaders, null);
 		try {
+			if (!uri.startsWith("http://localhost"))
+				System.out.println(proxystr + " " + uri + ">");
 			response = client.execute(request, context);
+			if (!uri.startsWith("http://localhost"))
+				System.out.println(proxystr + " " + uri + "<");
 			lastStatus = response.getStatusLine().getStatusCode();
 			if (onlySucessfulEntity) {
 				if (lastStatus / 100 != 2) {
@@ -215,6 +219,8 @@ public class BasicHttpClient implements Closeable {
 			lastStatus = NoHttpResponseError;
 		} catch (SSLHandshakeException e) {
 			lastStatus = SSLHandshakeError;
+		} catch (SSLException e) {
+			lastStatus = SSLError;
 		} catch (ConnectionClosedException e) {
 			lastStatus = ConnectionClosedError;
 		} catch (IOException e) {
@@ -284,6 +290,8 @@ public class BasicHttpClient implements Closeable {
 			lastStatus = NoHttpResponseError;
 		} catch (SSLHandshakeException e) {
 			lastStatus = SSLHandshakeError;
+		} catch (SSLException e) {
+			lastStatus = SSLError;
 		} catch (ConnectionClosedException e) {
 			lastStatus = ConnectionClosedError;
 		} catch (IOException e) {
@@ -323,6 +331,7 @@ public class BasicHttpClient implements Closeable {
 	 *                 {@code -1} indicates the scheme default port.
 	 */
 	public void setProxy(String hostname, int port) {
+		proxystr = hostname + ":" + port;
 		proxy = new HttpHost(hostname, port);
 	}
 
@@ -334,7 +343,7 @@ public class BasicHttpClient implements Closeable {
 	 *                 {@code -1} indicates the scheme default port.
 	 */
 	public void setProxy(String hostname, String port) {
-		proxy = new HttpHost(hostname, Integer.parseInt(port));
+		setProxy(hostname, Integer.parseInt(port));
 	}
 
 	public void removeCurrentProxy() {

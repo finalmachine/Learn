@@ -60,8 +60,8 @@ public class ProxyPool {
 	// 抓取有代理的代理服务器地址
 	public static void GrabYoudaili() {
 		BasicHttpClient browser = new BasicHttpClient();
-		String[] urls = new String[] { "http://www.youdaili.net/Daili/guowai/",
-				"http://www.youdaili.net/Daili/guonei/" };
+		String[] urls = new String[] { "http://www.youdaili.net/Daili/guowai",
+				"http://www.youdaili.net/Daili/guonei" };
 		int count = 0;
 		for (String url : urls) {
 			BasicHttpResponse response = browser.get(url);
@@ -124,15 +124,21 @@ public class ProxyPool {
 	}
 
 	public static void checkProxyPool() {
-	//	DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
-	//	for (DBObject proxyInfo : cursor) {
-	//		producer.send((String) proxyInfo.get("_id"));
-	//	}
-	//	cursor.close();
-		new MsgConsumers<>(queueName, 1, () -> ProxyPool::checkProxy).run();
+		DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
+		for (DBObject proxyInfo : cursor) {
+			producer.send((String) proxyInfo.get("_id"));
+		}
+		cursor.close();
+		try {
+			new MsgConsumers<>(queueName, 40, () -> {
+				return ProxyPool::checkProxy;
+			}).run();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
-	private static boolean checkProxy(String socketAddr) {
+	private static boolean checkProxy(String socketAddr) throws Exception {
 		System.out.println("begin " + socketAddr);
 		BasicHttpClient browser = new BasicHttpClient();
 		browser.setProxy(socketAddr.split(":")[0], socketAddr.split(":")[1]);

@@ -49,7 +49,7 @@ public class BasicHttpClient implements Closeable {
 	protected static final int defaultMaxRedirects = 3;
 
 	// default headers
-	protected static final String Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.9,image/webp,*/*;q=0.8";
+	protected static final String Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 	protected static final String Accept_Charset = "utf-8, gbk;q=0.9";
 	protected static final String Accept_Language = "zh-CN,zh;q=0.8";
 	protected static final String User_Agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36";
@@ -225,6 +225,8 @@ public class BasicHttpClient implements Closeable {
 			lastStatus = ConnectionClosedError;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			if (response != null) {
 				try {
@@ -370,9 +372,7 @@ public class BasicHttpClient implements Closeable {
 
 	public static void main(String[] args) throws Exception {
 		BasicHttpClient client = new BasicHttpClient();
-		Map<String, String> data = new HashMap<>();
-		data.put("message", "中文");
-		BasicHttpResponse re = client.post("https://localhost:8443/WebTest/servlet/copy", data);
+		BasicHttpResponse re = client.get("http://www.baidu.com");
 		System.out.println(client.getLastStatus());
 		System.out.println(re.getDocument());
 		client.close();

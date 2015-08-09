@@ -157,7 +157,7 @@ public class BasicHttpResponse {
 					"HTTP entity too large to be buffered in memory");
 			int i = (int)entity.getContentLength();
 			if (i < 0) {
-				throw new NoHttpResponseException("content length < 0");
+				i = 4096;
 			}
 			final ByteArrayBuffer buffer = new ByteArrayBuffer(i);
 			final byte[] tmp = new byte[4096];

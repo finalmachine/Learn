@@ -200,33 +200,56 @@ public class BasicHttpClient implements Closeable {
 			response.close();
 			return toReturn;
 		} catch (ConnectTimeoutException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "ConnectTimeoutError");
 			lastStatus = ConnectTimeoutError;
 		} catch (SocketTimeoutException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "SocketTimeoutError");
 			lastStatus = SocketTimeoutError;
 		} catch (HttpHostConnectException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "HttpHostConnectError");
 			lastStatus = HttpHostConnectError;
 		} catch (ClientProtocolException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "ClientProtocolException");
 			if (e.getCause() instanceof RedirectException) {
 				lastStatus = OverMaxRedirectsError;
 			} else if (e.getCause() instanceof ProtocolException) {
 				lastStatus = ProtocolError;
 			} else {
+				System.err.println("==============");
 				throw new RuntimeException(e);
 			}
 		} catch (SocketException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "SocketExceptionError");
 			lastStatus = SocketExceptionError;
 		} catch (NoHttpResponseException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "NoHttpResponseError");
 			lastStatus = NoHttpResponseError;
 		} catch (SSLHandshakeException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "SSLHandshakeError");
 			lastStatus = SSLHandshakeError;
 		} catch (SSLException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "SSLError");
 			lastStatus = SSLError;
 		} catch (ConnectionClosedException e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "ConnectionClosedError");
 			lastStatus = ConnectionClosedError;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+	//	} catch (IOException e) {
+	//		throw new RuntimeException(e);
 		} catch (Exception e) {
+			if (!uri.startsWith("http://localhost"))
+				System.err.println(proxystr + " " + "Exception");
+			System.err.println("---------------------");
 			e.printStackTrace();
+			System.err.println("---------------------");
 		} finally {
 			if (response != null) {
 				try {

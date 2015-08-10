@@ -81,10 +81,10 @@ public class RedirectExec implements ClientExecChain {
 		HttpRoute currentRoute = route;
 		HttpRequestWrapper currentRequest = request;
 		for (int redirectCount = 0;;) {
-			System.out.println("execute " + config.getProxy() + ">>");
+			System.out.println("Redirect " + config.getProxy() + " " + request.getURI() + ">>");
 			final CloseableHttpResponse response = requestExecutor.execute(
 					currentRoute, currentRequest, context, execAware);
-			System.out.println("execute " + config.getProxy() + "<<");
+			System.out.println("Redirect " + config.getProxy() + " " + request.getURI() + "<<");
 			try {
 				if (config.isRedirectsEnabled() &&
 						this.redirectStrategy.isRedirected(currentRequest, response, context)) {
@@ -137,15 +137,19 @@ public class RedirectExec implements ClientExecChain {
 					EntityUtils.consume(response.getEntity());
 					response.close();
 				} else {
+					System.out.println(config.getProxy() + " redirect return");
 					return response;
 				}
 			} catch (final RuntimeException ex) {
+				System.out.println(config.getProxy() + " redirect e1");
 				response.close();
 				throw ex;
 			} catch (final IOException ex) {
+				System.out.println(config.getProxy() + " redirect e2");
 				response.close();
 				throw ex;
 			} catch (final HttpException ex) {
+				System.out.println(config.getProxy() + " redirect e3");
 				// Protocol exception related to a direct.
 				// The underlying connection may still be salvaged.
 				try {

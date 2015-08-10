@@ -130,7 +130,7 @@ public class ProxyPool {
 		}
 		cursor.close();
 		try {
-			new MsgConsumers<>(queueName, 40, () -> {
+			new MsgConsumers<>(queueName, 20, () -> {
 				return ProxyPool::checkProxy;
 			}).run();
 		} catch (Exception e) {

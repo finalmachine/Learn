@@ -62,7 +62,6 @@ public class MsgConsumers<T extends Serializable> {
 		@Override
 		public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
 				byte[] body) throws IOException {
-			System.out.println("message:" + SerializationUtils.deserialize(body));
 			boolean result;
 			try {
 				result = _worker.work(SerializationUtils.deserialize(body));

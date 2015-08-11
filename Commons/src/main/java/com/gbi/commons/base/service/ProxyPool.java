@@ -130,7 +130,7 @@ public class ProxyPool {
 		}
 		cursor.close();
 		try {
-			new MsgConsumers<>(queueName, 20, () -> {
+			new MsgConsumers<>(queueName, 1, () -> {
 				return ProxyPool::checkProxy;
 			}).run();
 		} catch (Exception e) {
@@ -176,7 +176,7 @@ public class ProxyPool {
 
 	public static void main(String[] args) {
 		init();
-	//	GrabYoudaili();
+//		GrabYoudaili();
 		checkProxyPool();
 		exit();
 	}

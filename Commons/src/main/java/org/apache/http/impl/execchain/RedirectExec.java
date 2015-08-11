@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+import com.gbi.commons.config.Params;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -81,10 +82,10 @@ public class RedirectExec implements ClientExecChain {
 		HttpRoute currentRoute = route;
 		HttpRequestWrapper currentRequest = request;
 		for (int redirectCount = 0;;) {
-			System.out.println("Redirect " + config.getProxy() + " " + request.getURI() + ">>");
+			Params.log.info("Redirect " + config.getProxy() + " " + request.getURI() + ">>");
 			final CloseableHttpResponse response = requestExecutor.execute(
 					currentRoute, currentRequest, context, execAware);
-			System.out.println("Redirect " + config.getProxy() + " " + request.getURI() + "<<");
+			Params.log.info("Redirect " + config.getProxy() + " " + request.getURI() + "<<");
 			try {
 				if (config.isRedirectsEnabled() &&
 						this.redirectStrategy.isRedirected(currentRequest, response, context)) {
@@ -141,15 +142,15 @@ public class RedirectExec implements ClientExecChain {
 					return response;
 				}
 			} catch (final RuntimeException ex) {
-				System.out.println(config.getProxy() + " redirect e1");
+				Params.log.info(config.getProxy() + " redirect e1");
 				response.close();
 				throw ex;
 			} catch (final IOException ex) {
-				System.out.println(config.getProxy() + " redirect e2");
+				Params.log.info(config.getProxy() + " redirect e2");
 				response.close();
 				throw ex;
 			} catch (final HttpException ex) {
-				System.out.println(config.getProxy() + " redirect e3");
+				Params.log.info(config.getProxy() + " redirect e3");
 				// Protocol exception related to a direct.
 				// The underlying connection may still be salvaged.
 				try {

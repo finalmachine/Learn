@@ -2,6 +2,7 @@ package org.apache.http.protocol;
 
 import java.io.IOException;
 
+import com.gbi.commons.config.Params;
 import org.apache.http.HttpClientConnection;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -92,18 +93,24 @@ public class HttpRequestExecutor {
 		Args.notNull(conn, "Client connection");
 		Args.notNull(context, "HTTP context");
 		try {
+			Params.log.info(conn.toString() + " >>>>>");
 			HttpResponse response = doSendRequest(request, conn, context);
+			Params.log.info(conn.toString() + " -----");
 			if (response == null) {
 				response = doReceiveResponse(request, conn, context);
 			}
+			Params.log.info(conn.toString() + " <<<<<");
 			return response;
 		} catch (final IOException ex) {
+			Params.log.info(conn.toString() + " io >>>>>");
 			closeConnection(conn);
 			throw ex;
 		} catch (final HttpException ex) {
+			Params.log.info(conn.toString() + " http >>>>>");
 			closeConnection(conn);
 			throw ex;
 		} catch (final RuntimeException ex) {
+			Params.log.info(conn.toString() + " run >>>>>");
 			closeConnection(conn);
 			throw ex;
 		}

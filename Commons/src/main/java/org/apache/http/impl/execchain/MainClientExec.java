@@ -5,6 +5,7 @@ import java.io.InterruptedIOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.gbi.commons.config.Params;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.ConnectionReuseStrategy;
@@ -240,9 +241,9 @@ public class MainClientExec implements ClientExecChain {
 					}
 					this.authenticator.generateAuthResponse(request, proxyAuthState, context);
 				}
-
+				Params.log.info(execCount + " " + route + " >>>>");
 				response = requestExecutor.execute(request, managedConn, context);
-
+				Params.log.info(execCount + " " + route + " <<<<");
 				// The connection is in or can be brought to a re-usable state.
 				if (reuseStrategy.keepAlive(response, context)) {
 					// Set the idle duration of this connection
@@ -261,7 +262,7 @@ public class MainClientExec implements ClientExecChain {
 				} else {
 					connHolder.markNonReusable();
 				}
-
+				Params.log.info(execCount + " " + route + " .");
 				if (needAuthentication(
 											  targetAuthState, proxyAuthState, route, response, context)) {
 					// Make sure the response body is fully consumed, if present
@@ -295,7 +296,7 @@ public class MainClientExec implements ClientExecChain {
 					break;
 				}
 			}
-
+			Params.log.info(route + " ..");
 			if (userToken == null) {
 				userToken = userTokenHandler.getUserToken(context);
 				context.setAttribute(HttpClientContext.USER_TOKEN, userToken);
@@ -303,28 +304,34 @@ public class MainClientExec implements ClientExecChain {
 			if (userToken != null) {
 				connHolder.setState(userToken);
 			}
-
+			Params.log.info(route + " ...");
 			// check for entity, release connection if possible
 			final HttpEntity entity = response.getEntity();
 			if (entity == null || !entity.isStreaming()) {
+				Params.log.info(route + " return >>>>");
 				// connection not needed and (assumed to be) in re-usable state
 				connHolder.releaseConnection();
 				return new HttpResponseProxy(response, null);
 			} else {
+				Params.log.info(route + " return >>>>");
 				return new HttpResponseProxy(response, connHolder);
 			}
 		} catch (final ConnectionShutdownException ex) {
+			Params.log.info(route + " ioex >>>>");
 			final InterruptedIOException ioex = new InterruptedIOException(
 																				  "Connection has been shut down");
 			ioex.initCause(ex);
 			throw ioex;
 		} catch (final HttpException ex) {
+			Params.log.info(route + " httperr >>>>");
 			connHolder.abortConnection();
 			throw ex;
 		} catch (final IOException ex) {
+			Params.log.info(route + " ioe >>>>");
 			connHolder.abortConnection();
 			throw ex;
 		} catch (final RuntimeException ex) {
+			Params.log.info(route + " run >>>>");
 			connHolder.abortConnection();
 			throw ex;
 		}

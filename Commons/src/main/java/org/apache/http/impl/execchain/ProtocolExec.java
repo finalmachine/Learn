@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import com.gbi.commons.config.Params;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpException;
@@ -154,26 +155,26 @@ public class ProtocolExec implements ClientExecChain {
 
 		this.httpProcessor.process(request, context);
 
-		System.out.println(route.getProxyHost() + " >>>");
+		Params.log.info(route.getProxyHost() + " >>>");
 		final CloseableHttpResponse response = this.requestExecutor.execute(route, request,
 				context, execAware);
-		System.out.println(route.getProxyHost() + " <<<");
+		Params.log.info(route.getProxyHost() + " <<<");
 		try {
-			System.out.println(route.getProxyHost() + " return >>>");
+			Params.log.info(route.getProxyHost() + " return >>>");
 			// Run response protocol interceptors
 			context.setAttribute(HttpCoreContext.HTTP_RESPONSE, response);
 			this.httpProcessor.process(response, context);
 			return response;
 		} catch (final RuntimeException ex) {
-			System.out.println(route.getProxyHost() + " r >>>");
+			Params.log.info(route.getProxyHost() + " r >>>");
 			response.close();
 			throw ex;
 		} catch (final IOException ex) {
-			System.out.println(route.getProxyHost() + " io >>>");
+			Params.log.info(route.getProxyHost() + " io >>>");
 			response.close();
 			throw ex;
 		} catch (final HttpException ex) {
-			System.out.println(route.getProxyHost() + " http >>>");
+			Params.log.info(route.getProxyHost() + " http >>>");
 			response.close();
 			throw ex;
 		}

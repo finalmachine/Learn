@@ -40,7 +40,7 @@ public class ProxyPool {
 		try {
 			client = new MongoClient(Params.MongoDB.PROXIES.host, Params.MongoDB.PROXIES.port);
 			collection = client.getDB(Params.MongoDB.PROXIES.database).getCollection("proxies");
-			producer = new MsgProducer<>(queueName);
+			producer = new MsgProducer<>(queueName, Params.MQ.LOCAL.host, Params.MQ.LOCAL.port, null, null, null);
 		} catch (TimeoutException | IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -130,7 +130,7 @@ public class ProxyPool {
 		}
 		cursor.close();
 		try {
-			new MsgConsumers<>(queueName, 1, () -> {
+			new MsgConsumers<>(queueName, 40, () -> {
 				return ProxyPool::checkProxy;
 			}).run();
 		} catch (Exception e) {
@@ -139,25 +139,25 @@ public class ProxyPool {
 	}
 
 	private static boolean checkProxy(String socketAddr) throws Exception {
-		System.out.println("begin " + socketAddr);
+		Params.log.info("begin " + socketAddr);
 		BasicHttpClient browser = new BasicHttpClient();
 		browser.setProxy(socketAddr.split(":")[0], socketAddr.split(":")[1]);
 		BasicDBList tag = new BasicDBList();
 		BasicDBList delay = new BasicDBList();
 		for (String key : checkSubject.keySet()) {
-			System.out.println(socketAddr + ">" + key);
+			Params.log.info(socketAddr + ">" + key);
 			long beginTime = System.currentTimeMillis();
 			BasicHttpResponse r = browser.get(checkSubject.get(key));
-			System.out.println(socketAddr + " " + (r == null) + " " + key);
+			Params.log.info(socketAddr + " " + (r == null) + " " + key);
 			if (r == null) {
 				continue;
 			}
-			System.out.println(socketAddr + "<" + key);
+			Params.log.info(socketAddr + "<" + key);
 			long endTime = System.currentTimeMillis();
 			tag.add(key);
 			delay.add(endTime - beginTime);
 		}
-		System.out.println(socketAddr + " out");
+		Params.log.info(socketAddr + " out");
 		if (tag.size() == 0) {
 			System.out.println(socketAddr + " 没什么用");
 			collection.remove(new BasicDBObject("_id", socketAddr));
@@ -166,11 +166,11 @@ public class ProxyPool {
 			proxyInfo.put("tag", tag);
 			proxyInfo.put("delay", delay);
 		//	proxyInfo.put("updateTime", Calendar.getInstance().getTime());
-			proxyInfo.put("updateTime", "3"); // TODO
+			proxyInfo.put("updateTime", "1"); // TODO
 			collection.save(proxyInfo);
 		}
 		browser.close();
-		System.out.println("end " + socketAddr);
+		Params.log.info("end " + socketAddr);
 		return true;
 	}
 

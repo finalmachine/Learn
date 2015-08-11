@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.*;
 
+import com.gbi.commons.config.Params;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
@@ -186,10 +187,10 @@ public class BasicHttpClient implements Closeable {
 		prepare(HttpMethod.GET, uri, extraHeaders, null);
 		try {
 			if (!uri.startsWith("http://localhost"))
-				System.out.println(proxystr + " " + uri + ">");
+				Params.log.info(proxystr + " " + uri + ">");
 			response = client.execute(request, context);
 			if (!uri.startsWith("http://localhost"))
-				System.out.println(proxystr + " " + uri + "<");
+				Params.log.info(proxystr + " " + uri + "<");
 			lastStatus = response.getStatusLine().getStatusCode();
 			if (onlySucessfulEntity) {
 				if (lastStatus / 100 != 2) {
@@ -201,52 +202,52 @@ public class BasicHttpClient implements Closeable {
 			return toReturn;
 		} catch (ConnectTimeoutException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "ConnectTimeoutError");
+				Params.log.info(proxystr + " " + "ConnectTimeoutError");
 			lastStatus = ConnectTimeoutError;
 		} catch (SocketTimeoutException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "SocketTimeoutError");
+				Params.log.info(proxystr + " " + "SocketTimeoutError");
 			lastStatus = SocketTimeoutError;
 		} catch (HttpHostConnectException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "HttpHostConnectError");
+				Params.log.info(proxystr + " " + "HttpHostConnectError");
 			lastStatus = HttpHostConnectError;
 		} catch (ClientProtocolException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "ClientProtocolException");
+				Params.log.info(proxystr + " " + "ClientProtocolException");
 			if (e.getCause() instanceof RedirectException) {
 				lastStatus = OverMaxRedirectsError;
 			} else if (e.getCause() instanceof ProtocolException) {
 				lastStatus = ProtocolError;
 			} else {
-				System.err.println("==============");
+				Params.log.info("==============");
 				throw new RuntimeException(e);
 			}
 		} catch (SocketException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "SocketExceptionError");
+				Params.log.info(proxystr + " " + "SocketExceptionError");
 			lastStatus = SocketExceptionError;
 		} catch (NoHttpResponseException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "NoHttpResponseError");
+				Params.log.info(proxystr + " " + "NoHttpResponseError");
 			lastStatus = NoHttpResponseError;
 		} catch (SSLHandshakeException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "SSLHandshakeError");
+				Params.log.info(proxystr + " " + "SSLHandshakeError");
 			lastStatus = SSLHandshakeError;
 		} catch (SSLException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "SSLError");
+				Params.log.info(proxystr + " " + "SSLError");
 			lastStatus = SSLError;
 		} catch (ConnectionClosedException e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "ConnectionClosedError");
+				Params.log.info(proxystr + " " + "ConnectionClosedError");
 			lastStatus = ConnectionClosedError;
 	//	} catch (IOException e) {
 	//		throw new RuntimeException(e);
 		} catch (Exception e) {
 			if (!uri.startsWith("http://localhost"))
-				System.err.println(proxystr + " " + "Exception");
+				Params.log.info(proxystr + " " + "Exception");
 			System.err.println("---------------------");
 			e.printStackTrace();
 			System.err.println("---------------------");
@@ -255,11 +256,12 @@ public class BasicHttpClient implements Closeable {
 				try {
 					response.close();
 				} catch (IOException e) {
-					System.err.println("response 关闭失败");
+					Params.log.info("response 关闭失败");
 					e.printStackTrace();
 				}
 			}
 		}
+		Params.log.info(proxystr + " return null");
 		return null;
 	}
 

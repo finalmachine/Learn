@@ -2,6 +2,7 @@ package org.apache.http.impl.execchain;
 
 import java.io.IOException;
 
+import com.gbi.commons.config.Params;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
@@ -58,11 +59,11 @@ public class RetryExec implements ClientExecChain {
 		final Header[] origheaders = request.getAllHeaders();
 		for (int execCount = 1;; execCount++) {
 			try {
-				System.out.println(execCount + " ~ " + route.getProxyHost());
+				Params.log.info(execCount + " ~ " + route.getProxyHost());
 				return this.requestExecutor.execute(route, request, context, execAware);
 			} catch (final IOException ex) {
 				if (execAware != null && execAware.isAborted()) {
-					System.out.println(execCount + " ~ " + route.getProxyHost() + " ioe");
+					Params.log.info(execCount + " ~ " + route.getProxyHost() + " ioe");
 					this.log.debug("Request has been aborted");
 					throw ex;
 				}
@@ -87,7 +88,7 @@ public class RetryExec implements ClientExecChain {
 						this.log.info("Retrying request to " + route);
 					}
 				} else {
-					System.out.println(execCount + " ~ " + route.getProxyHost() + " in else");
+					Params.log.info(execCount + " ~ " + route.getProxyHost() + " in else");
 					if (ex instanceof NoHttpResponseException) {
 						final NoHttpResponseException updatedex = new NoHttpResponseException(
 								route.getTargetHost().toHostString() + " failed to respond");

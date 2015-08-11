@@ -96,7 +96,8 @@ public class MsgConsumers<T extends Serializable> {
 		if (size <= 0) {
 			throw new IllegalArgumentException("size must over 0");
 		}
-		_threadPool = Executors.newFixedThreadPool(size);
+	//	_threadPool = Executors.newFixedThreadPool(size);
+		_threadPool = Executors.newCachedThreadPool();
 		_monitor = new MsgQueueMonitor("/", queueName);
 		try {
 			for (int i = 0; i < size; ++i) {

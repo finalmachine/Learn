@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.gbi</groupId>
             <artifactId>Commons</artifactId>
-            <version>0.1.2</version>
+            <version>1.2</version>
         </dependency>
     </dependencies>
 </project>

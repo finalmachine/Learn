@@ -207,8 +207,11 @@ public class MainClientExec implements ClientExecChain {
 				if (!managedConn.isOpen()) {
 					this.log.debug("Opening connection " + route);
 					try {
+						Params.log.info(execCount + " establishRoute " + route + " >>>>");
 						establishRoute(proxyAuthState, managedConn, route, request, context);
+						Params.log.info(execCount + " establishRoute " + route + " <<<<");
 					} catch (final TunnelRefusedException ex) {
+						Params.log.info(execCount + " establishRoute err " + route + " <<<<");
 						if (this.log.isDebugEnabled()) {
 							this.log.debug(ex.getMessage());
 						}
@@ -353,7 +356,7 @@ public class MainClientExec implements ClientExecChain {
 		do {
 			final HttpRoute fact = tracker.toRoute();
 			step = this.routeDirector.nextStep(route, fact);
-
+			Params.log.info("establishRoute " + route + " " + step);
 			switch (step) {
 
 				case HttpRouteDirector.CONNECT_TARGET:
